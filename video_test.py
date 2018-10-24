@@ -18,7 +18,7 @@ if __name__ == "__main__":
     #colour = (238,130,238)
 
     # Read video
-	video = cv2.VideoCapture('20181022_143252_compressed.mp4')
+	video = cv2.VideoCapture('/media/sf_VirtualBox/cs9517/assigntments/main_project/cs9517-Skynet-Project/data/CompressedVideos/20181022_143252_compressed.mp4')
     # fps = video.get(cv2.CV_CAP_PROP_FPS)
     # print(fps)
     # Check every n number of frames
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 		if cv2.waitKey(20) == 27:
 			break
 
-		ref_court = perspectiveT.draw_ref_point(599,263,H,ref_court_copy,frame)
+		ref_court = perspectiveT.draw_ref_point(550,360,H,ref_court_copy,frame)
                 # print("showing image")
 		cv2.imshow('video', ref_court)
 		cv2.waitKey(1)
