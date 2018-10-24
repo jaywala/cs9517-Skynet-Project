@@ -21,7 +21,7 @@ def get_corner(event, x,y, flags, param):
 	global corners_found
 	if event == cv2.EVENT_LBUTTONDBLCLK:
 		#draw a small indication dot
-		cv2.circle(sel_frame, (x,y),1, (0,255,0),-1)
+		cv2.circle(sel_frame, (x,y),5, (0,255,0),-1)
 		#add and update number of corners found
 		corners[corners_found,:]= [x,y]
 		corners_found +=1
@@ -74,7 +74,7 @@ def draw_ref_point(x,y,H, ref_img, frame):
 	fr_h, fr_w = frame.shape[:2]
 	global sel_frame
 	sel_h, sel_w = sel_frame.shape[:2]
-	newX, newY = transform_point(x*sel_w/fr_w,y*sel_h/fr_h,H, ref_w,ref_h)
+	newX, newY = transform_point(int(x*(sel_w/fr_w)),int(y*(sel_h/fr_h)),H, ref_w,ref_h)
 	cv2.circle(ref_img, (int(newY),int(newX)),5, (0,255,0),-1)
 	return ref_img
 
