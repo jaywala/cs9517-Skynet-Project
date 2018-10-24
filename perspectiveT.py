@@ -5,6 +5,7 @@
 import numpy as np 
 import sys, cv2
 from PIL import Image
+import math
 
 #Create window for selecting corners
 winName = 'Select court corners, going clockwise from top left corner'
@@ -74,8 +75,9 @@ def draw_ref_point(x,y,H, ref_img, frame):
 	fr_h, fr_w = frame.shape[:2]
 	global sel_frame
 	sel_h, sel_w = sel_frame.shape[:2]
-	newX, newY = transform_point(int(x*(sel_w/fr_w)),int(y*(sel_h/fr_h)),H, ref_w,ref_h)
-	cv2.circle(ref_img, (int(newY),int(newX)),5, (0,255,0),-1)
+	newX, newY = transform_point(x*sel_w/fr_w,y*sel_h/fr_h,H, ref_w,ref_h)
+	if math.isnan(newY) != True:
+		cv2.circle(ref_img, (int(newY),int(newX)),5, (0,255,0),-1)
 	return ref_img
 
 #Choose boundary parameters based on first frame
