@@ -62,7 +62,7 @@ if __name__ == "__main__":
     colour = (238,130,238)
 
     # Read video
-    video = cv2.VideoCapture('/media/sf_VirtualBox/cs9517/assigntments/main_project/cs9517-Skynet-Project/data/CompressedVideos/20181022_142951_compressed.mp4')
+    video = cv2.VideoCapture('1.mp4')
     # fps = video.get(cv2.CV_CAP_PROP_FPS)
     # print(fps)
     # Check every n number of frames
@@ -91,7 +91,7 @@ if __name__ == "__main__":
             rects = PedestrianDetection(hog, frame)
             if (len(rects) == 0):
                 # skip 10 frames if no people are found
-                count = 10
+                count = 1
                 print("Null returned")
             else:
                 # print(rects[0])
