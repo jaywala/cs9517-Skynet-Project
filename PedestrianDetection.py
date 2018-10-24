@@ -2,16 +2,19 @@
 from __future__ import print_function
 from imutils.object_detection import non_max_suppression
 from imutils import paths
+import tracker
 import numpy as np
 import argparse
 import imutils
 import cv2
+from random import randint
 
+trackerTypes = ['BOOSTING', 'MIL', 'KCF','TLD', 'MEDIANFLOW', 'GOTURN', 'MOSSE', 'CSRT']
 
-def PedestrianDetection(hog, frame):
+def PedestrianDetection(hog, image):
 
     # image = frame
-    image = imutils.resize(frame, width=min(800, frame.shape[1]))
+
     orig = image.copy()
 
     # # Histrogram equalisation
@@ -45,8 +48,8 @@ def PedestrianDetection(hog, frame):
     # print("[INFO] {} original boxes, {} after suppression".format(len(rects), len(pick)))
  
 	# show the output images
-    cv2.imshow("Before NMS", orig)
-    cv2.imshow("After NMS", image)
+    # cv2.imshow("Before NMS", orig)
+    cv2.imshow("video", image)
     cv2.waitKey(4)
     return rects
 
@@ -54,25 +57,43 @@ if __name__ == "__main__":
     # initialize the HOG descriptor/person detector
     hog = cv2.HOGDescriptor()
     hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+    colour = (238,130,238)
 
     # Read video
-    video = cv2.VideoCapture('/media/sf_VirtualBox/cs9517/assigntments/main_project/cs9517-Skynet-Project/data/new/20181022_150153.mp4')
+    video = cv2.VideoCapture('/media/sf_VirtualBox/cs9517/assigntments/main_project/cs9517-Skynet-Project/data/CompressedVideos/20181022_142951_compressed.mp4')
+    # fps = video.get(cv2.CV_CAP_PROP_FPS)
+    # print(fps)
     # Check every n number of frames
-    checkfreq = 30
-    count = checkfreq
+    detectFreq = 50
+    count = 1
     while video.isOpened():
         count -= 1
         success, frame = video.read()
         if not success:
             break
-        
+        frame = imutils.resize(frame, width=min(800, frame.shape[1]))
 
         if count == 0:
-            count = checkfreq
-            if (len(PedestrianDetection(hog, frame)) == 0):
+            rects = PedestrianDetection(hog, frame)
+            if (len(rects) == 0):
                 # skip 10 frames if no people are found
                 count = 10
                 print("Null returned")
+            else:
+                # print(rects[0])
+                multiTracker = tracker.initialiseMultiTracker(trackerTypes[6], frame, rects)
+                count = detectFreq
+        else:
+            success, boxes = multiTracker.update(frame)
+            if success:
+                for i, newbox in enumerate(boxes):
+                    p1 = (int(newbox[0]), int(newbox[1]))
+                    p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
+                    cv2.rectangle(frame, p1, p2, colour, 2, 1)
+                # print("showing image")
+                cv2.imshow('video', frame)
+                cv2.waitKey(1)
+
     
 
     video.release()
