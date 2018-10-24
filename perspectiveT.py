@@ -101,7 +101,7 @@ def setupTransform(frame):
 	ref_court = cv2.imread('half_court_ref.PNG')
 	ref_h, ref_w = ref_court.shape[:2]
 	
-	choose_boundary(first_frame)
+	choose_boundary(frame)
 	
 	#Get the birds eye of the selected court
 	#Warped is the selected boundary warped into a rectangle

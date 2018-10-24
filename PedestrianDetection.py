@@ -8,6 +8,7 @@ import argparse
 import imutils
 import cv2
 from random import randint
+import perspectiveT
 
 trackerTypes = ['BOOSTING', 'MIL', 'KCF','TLD', 'MEDIANFLOW', 'GOTURN', 'MOSSE', 'CSRT']
 
@@ -54,6 +55,7 @@ def PedestrianDetection(hog, image):
     return rects
 
 if __name__ == "__main__":
+
     # initialize the HOG descriptor/person detector
     hog = cv2.HOGDescriptor()
     hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
@@ -66,12 +68,23 @@ if __name__ == "__main__":
     # Check every n number of frames
     detectFreq = 50
     count = 1
+
+    success, first_frame = video.read()
+    if not success:
+        print("video read error")
+        exit
+
+    # Set up for PerspectiveT
+    ref_court = cv2.imread('half_court_ref.PNG')
+    H = perspectiveT.setupTransform(first_frame)
+
     while video.isOpened():
-        count -= 1
         success, frame = video.read()
         if not success:
             break
+        count -= 1
         frame = imutils.resize(frame, width=min(800, frame.shape[1]))
+        ref_court_copy = ref_court.copy()
 
         if count == 0:
             rects = PedestrianDetection(hog, frame)
@@ -90,9 +103,11 @@ if __name__ == "__main__":
                     p1 = (int(newbox[0]), int(newbox[1]))
                     p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
                     cv2.rectangle(frame, p1, p2, colour, 2, 1)
+                    ref_court = perspectiveT.draw_ref_point(newbox[1]+newbox[3]/2,newbox[0]+newbox[2],H, ref_court_copy,frame)
                 # print("showing image")
                 cv2.imshow('video', frame)
                 cv2.waitKey(1)
+        
 
     
 
