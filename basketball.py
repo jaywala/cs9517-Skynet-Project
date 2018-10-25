@@ -7,6 +7,12 @@ from skimage.measure import compare_ssim
 import time
 from math import sqrt
 import EKF
+import PedestrianDetection
+import tracker
+import perspectiveT
+
+
+trackerTypes = ['BOOSTING', 'MIL', 'KCF','TLD', 'MEDIANFLOW', 'GOTURN', 'MOSSE', 'CSRT']
 
 
 
@@ -57,7 +63,7 @@ def detectBall(frame):
 
     im_hsv[275:470, 96: 500] =0
     
-    cv2.imshow('bw',im_hsv)
+#    cv2.imshow('bw',im_hsv)
 
     points = (np.where(im_hsv>254))
     x = np.average(points[0][:])
@@ -103,7 +109,7 @@ def houghMethod(frame,flag,R_avg):
     
     (score, diff) = compare_ssim(ref_region, region, full=True)
     scored =0
-    if score < 0.40 and np.average(region1[:,:,2]) > R_avg + 7:
+    if score < 0.40 and np.average(region1[:,:,2]) > R_avg + 8:
         time.sleep(0.3)
 #        print(score)
 #        print("B:", np.average(region1[:,:,0]))
@@ -116,25 +122,55 @@ def houghMethod(frame,flag,R_avg):
 
 if __name__ == "__main__":
     #(384, 118, 43, 40)
-
+    score = 0
+    not_detect = 0
     cam = cv2.VideoCapture('123.mp4')
     flag =7
     tracker1 = cv2.MultiTracker_create()
-#    out = cv2.VideoWriter('output.mp4', -1, 20.0, (1200,720))
-
+#    out = cv2.VideoWriter('output1.mp4', -1, 20.0, (1200,720))
+    count = 1
+    detectFreq = 10
+    hog = cv2.HOGDescriptor()
+    hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+    colour = (238,130,238)
     while(cam.isOpened()):
+        count -=1
         ret, frame = cam.read()
         frame = np.asarray(frame)
         frame = cv2.resize(frame, (1200,720))
+        frame1 = frame.copy()
+#        frame = imutils.resize(frame, width=min(1200, frame.shape[1]))
+        if count == 0:
+            rects,frame = PedestrianDetection.PedestrianDetection(hog, frame)
+#            print("length is:",len(rects))
+            if (len(rects) == 0):
+                # skip 10 frames if no people are found
+                count = 1
+#                print("Null returned")
+            else:
+#                print("initalized")
+                multiTracker = tracker.initialiseMultiTracker(trackerTypes[7], frame, rects)
+                count = detectFreq
+        else:
+#            print(count)
+            success, boxes = multiTracker.update(frame)
+            if (len(boxes) < len(rects)) :
+                count = 1
+            
+            if success:
+                for i, newbox in enumerate(boxes):
+                    p1 = (int(newbox[0]), int(newbox[1]))
+                    p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
+                    cv2.rectangle(frame, p1, p2, colour, 2, 1)
         
         if flag == 7:
             box = cv2.selectROI('Select hoop area', frame, fromCenter=False,showCrosshair=True)
             print(box)
-            ref_region = frame[int(box[1]):int(box[1]+box[3]), int(box[0]):int(box[0]+box[2])]
+            ref_region = frame1[int(box[1]):int(box[1]+box[3]), int(box[0]):int(box[0]+box[2])]
             ref_region = cv2.cvtColor(ref_region ,cv2.COLOR_BGR2GRAY)
             ret = tracker1.add(cv2.TrackerCSRT_create(), frame, box)
             R_avg = 0
-            R_avg, scored = houghMethod(frame,flag, R_avg)
+            R_avg, scored = houghMethod(frame1,flag, R_avg)
 #        print(flag)
 
         
@@ -153,48 +189,60 @@ if __name__ == "__main__":
         flag = flag + 1
 
 
-        print('-'*30)
+#        print('-'*30)
 #        if( flag > 50):
 #            time.sleep(2)
 
         if not np.isnan(x) and not np.isnan(y):
             if not np.isnan(prev_x) and not np.isnan(prev_y):
-
-                if (math.hypot(x - prev_x, y - prev_y) >77):
+                dist = math.hypot(x - prev_x, y - prev_y)
+                if (not_detect < 5 and dist >60):
 #                    print("wrong")
 #                    print('\/'*30)
-                    (Xe,P) = EKF.predict(Xe,P,dt)
+
 #                    prev_x = Xe[1]
 #                    x = Xe[1]
 #                    prev_y = y = Xe[0]
 
-                else:
+                    (Xe,P) = EKF.predict(Xe,P,dt)
+                elif(not_detect > 5 or dist <60):
                     (Xe,P) = EKF.ApplyEKF(Xe,P,dt,y,x)
+                    not_detect = 0
 #            print("something special:", Xe[2])
+            elif(not_detect> 5):
+                print("else: ",not_detect)
+                (Xe,P) = EKF.ApplyEKF(Xe,P,dt,y,x)
             if Xe[2] > 0:
-                R_avg, scored = houghMethod(frame,flag, R_avg)
+                R_avg, scored = houghMethod(frame1,flag, R_avg)
+                
                 if scored==1:
-                    ret, frame = cam.read()
-                    ret, frame = cam.read()
-                    ret, frame = cam.read()
-                    ret, frame = cam.read()
-                    ret, frame = cam.read()
-                    ret, frame = cam.read()
-                    ret, frame = cam.read()
+                    score = score +1
+                    for j in range(7):
+                        ret, frame = cam.read()
+#                        cv2.imshow('video',frame)
+                        frame[:,:,:] = 0
+                        cv2.putText(frame, "Scored!!!", (300,360), cv2.FONT_HERSHEY_SIMPLEX, 5, (255,255,255), 2)
+                        cv2.imshow('video',frame)
                     print("socred")
-
-
+            
             cv2.circle(frame, (int(x), int(y)), int(3), (255,255,255), thickness=5)
-            cv2.circle(frame, (int(Xe[1]), int(Xe[0])), int(3), (112,255,75), thickness=5)
-
-        cv2.imshow('Window',frame)
-    #    out.write(frame)
-    #    if flag == 490:
-    #        out.release()
-    #        break
-    #    if cv2.waitKey(1) & 0xFF == ord('/'):
-    #        r = cv2.selectROI(frame)
-    #        print(r)
+        else:
+#            print("not detected")
+#            print("flag: ",flag)
+#            print(not_detect)
+            not_detect += 1
+            (Xe,P) = EKF.predict(Xe,P,dt)
+        cv2.putText(frame, ("Score: " +str(score)), (25,25), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255,255,255), 2)
+        cv2.circle(frame, (int(Xe[1]), int(Xe[0])), int(3), (112,255,75), thickness=5)
+        cv2.imshow('video',frame)
+        cv2.waitKey(2)
+#        out.write(frame)
+#        if flag == 490:
+#            out.release()
+#            break
+        if cv2.waitKey(1) & 0xFF == ord('/'):
+            r = cv2.selectROI(frame)
+            print(r)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 

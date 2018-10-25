@@ -45,6 +45,8 @@ def boundary_transform(img, width, height,pts):
 	#Compute perspective tranform matrix
 	M = cv2.getPerspectiveTransform(pts, dst)
 	#Get the newly warped image
+	#print("passing in "+ str(maxHeight))
+	#print("passing in "+ str(maxWidth))
 	warped = cv2.warpPerspective(img, M, (maxWidth,maxHeight))
 	
 	return (warped, M)
@@ -52,17 +54,22 @@ def boundary_transform(img, width, height,pts):
 #Transform the given point under the given perspective transform
 #returns the transformed point
 def transform_point(x,y,H,maxW,maxH):
+	global sel_frame
 	#get dimensions of the selection frame
 	h, w = sel_frame.shape[:2]
+	#print("Selection:" + str(h) +" "+str(w))
 	#Make new frame into an image
 	newFrame = np.zeros((h,w),dtype="float32")
 	newFrame[y][x] = 255
 	im_bit= np.stack([newFrame, newFrame, newFrame], axis=2) 
-
+	im_bit = cv2.circle(im_bit, (int(x),int(y)),5, (255,255,255),-1)
+	#cv2.imshow('im_bit', im_bit)
+	#cv2.waitKey(0)
 	wrp = cv2.warpPerspective(im_bit, H,(maxW,maxH))
-
+	#cv2.imshow('gray', wrp)
+	#cv2.waitKey(0)
 	point = np.where(wrp[...,0]>0)
-
+	#print(point)
 	x_point = np.average(point[0][:])
 	y_point = np.average(point[1][:])
 
@@ -75,7 +82,14 @@ def draw_ref_point(x,y,H, ref_img, frame):
 	fr_h, fr_w = frame.shape[:2]
 	global sel_frame
 	sel_h, sel_w = sel_frame.shape[:2]
-	newX, newY = transform_point(int(x*sel_w//fr_w),int(y*sel_h//fr_h),H, ref_w,ref_h)
+	#print("==============frame sizes===============")
+	#print("Reference:" + str(ref_h) +" "+str(ref_w))
+	#print(ref_img.shape)
+	#print("Frame:" + str(fr_h) +" "+str(fr_w))
+	#print("Selection:" + str(sel_h) +" "+str(sel_w))
+	#print("transforming : "+ str(y*sel_h/fr_h)+"  "+str(x*sel_w/fr_w))
+	newX, newY = transform_point(x*sel_w/fr_w,y*sel_h/fr_h,H, ref_w,ref_h)
+	#print("returned value : " + str(newY) + " " + str(newX))
 	if math.isnan(newY) != True:
 		cv2.circle(ref_img, (int(newY),int(newX)),5, (0,255,0),-1)
 	return ref_img
@@ -98,9 +112,10 @@ def choose_boundary(img):
 		sys.exit()
 
 #set up the transformation matrix, returns the transformation matrix
-def setupTransform(frame):
+def setupTransform(frame, ref_img):
 	#set the dimensions of the reference court
-	ref_court = cv2.imread('half_court_ref.PNG')
+	#ref_court = cv2.imread('half_court_ref.PNG')
+	ref_court = ref_img.copy()
 	ref_h, ref_w = ref_court.shape[:2]
 	
 	choose_boundary(frame)
@@ -113,26 +128,26 @@ def setupTransform(frame):
 	return H
 	
 ## =============== START OF PROGRAM ============== ##
-if __name__ == "__main__": 
+#if __name__ == "__main__": 
 	#Input error checking code
-	if (len(sys.argv) != 2):
-		print ('Usage: ./projection.py <input image> ')
-		sys.exit(1)
+#	if (len(sys.argv) != 2):
+#		print ('Usage: ./projection.py <input image> ')
+#		sys.exit(1)
 		
-	first_frame = cv2.resize(cv2.imread(sys.argv[1]), (0,0), fx=0.5 ,fy=0.5) 
-	ref_court = cv2.imread('half_court_ref.PNG')
+#	first_frame = cv2.resize(cv2.imread(sys.argv[1]), (0,0), fx=0.5 ,fy=0.5) 
+#	ref_court = cv2.resize(cv2.imread('half_court_ref.PNG'), (0,0), fx=0.5 ,fy=0.5) 
 	
-	H = setupTransform(first_frame)
+#	H = setupTransform(first_frame)
 	
-	x = 291 #point on the actual frame, no rescale
-	y = 388
-	ref_court = draw_ref_point(x,y,H, ref_court,first_frame)
-	toSave = Image.fromarray(ref_court)
-	toSave.save("cooourt.jpg")
+#	x = 291 #point on the actual frame, no rescale
+#	y = 388
+#	ref_court = draw_ref_point(x,y,H, ref_court,first_frame)
+#	toSave = Image.fromarray(ref_court)
+#	toSave.save("cooourt.jpg")
 	#The rest is for drawing the court
-	cv2.imshow('Reference court', ref_court)
-	cv2.waitKey(0)
-	cv2.circle(first_frame, (x,y),5,(0,255,0),-1)
-	cv2.imshow('point', first_frame)
-	cv2.waitKey(0)
-	cv2.destroyAllWindows()
+#	cv2.imshow('Reference court', ref_court)
+#	cv2.waitKey(0)
+#	cv2.circle(first_frame, (x,y),5,(0,255,0),-1)
+#	cv2.imshow('point', first_frame)
+#	cv2.waitKey(0)
+#	cv2.destroyAllWindows()

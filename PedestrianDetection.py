@@ -50,9 +50,9 @@ def PedestrianDetection(hog, image):
  
 	# show the output images
     # cv2.imshow("Before NMS", orig)
-    cv2.imshow("video", image)
-    cv2.waitKey(4)
-    return rects
+#    cv2.imshow("video", image)
+#    cv2.waitKey(4)
+    return pick,image
 
 if __name__ == "__main__":
 
