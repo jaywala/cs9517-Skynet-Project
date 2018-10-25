@@ -71,22 +71,23 @@ if __name__ == "__main__":
 
 
     # Set up for PerspectiveT
-    # success, first_frame = video.read()
-    # if not success:
-    #     print("video read error")
-    #     exit
+    success, first_frame = video.read()
+    if not success:
+        print("video read error")
+        exit
 
-    # ref_court = cv2.imread('half_court_ref.PNG')
-    # H = perspectiveT.setupTransform(first_frame)
+    ref_court = cv2.imread('half_court_ref.PNG')
+    first_frame = imutils.resize(first_frame, width=min(800, first_frame.shape[1]))
+    H = perspectiveT.setupTransform(first_frame,ref_court)
 
     while video.isOpened():
         success, frame = video.read()
         if not success:
             break
         count -= 1
-        # frame = imutils.resize(frame, width=min(800, frame.shape[1]))
-        frame = cv2.resize(frame,(1200,720))
-        # ref_court_copy = ref_court.copy()
+        frame = imutils.resize(frame, width=min(800, frame.shape[1]))
+        # frame = cv2.resize(frame,(1200,720))
+        ref_court_copy = ref_court.copy()
 
         if count == 0:
             rects = PedestrianDetection(hog, frame)
@@ -107,13 +108,10 @@ if __name__ == "__main__":
                     cv2.rectangle(frame, p1, p2, colour, 2, 1)
                     # print(frame.shape)
                     # print("{} {}".format(int(newbox[0]+newbox[2]//2),int(newbox[1]+newbox[3])))
-                    # ref_court = perspectiveT.draw_ref_point(int(newbox[0]+newbox[2]//2),int(newbox[1]+newbox[3]),H, ref_court_copy,frame)
+                    ref_court_copy = perspectiveT.draw_ref_point(int(newbox[0]+newbox[2]//2),int(newbox[1]+newbox[3]),H, ref_court_copy,frame)
                 # print("showing image")
                 cv2.imshow('video', frame)
                 cv2.waitKey(1)
-        
-
-    
 
     video.release()
     cv2.destroyAllWindows()
