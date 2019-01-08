@@ -10,3 +10,7 @@ Padding has been provided if the full court cannot be seen in the frame.
 
 # Selecting basketball hoop at the beginning
 When you execute the basketball.py file, it will ask you to select an ROI of the basketball hoop. You need to draw a rectangle around the red basketball hoop and press 'enter'
+
+
+
+![](images/ball-detection.png)
