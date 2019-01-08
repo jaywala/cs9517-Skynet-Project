@@ -62,7 +62,7 @@ if __name__ == "__main__":
     colour = (238,130,238)
 
     # Read video
-    video = cv2.VideoCapture('/media/sf_VirtualBox/cs9517/assigntments/main_project/cs9517-Skynet-Project/data/CompressedVideos/20181022_143252_compressed.mp4s')
+    video = cv2.VideoCapture('000.mp4')
     # fps = video.get(cv2.CV_CAP_PROP_FPS)
     # print(fps)
     # Check every n number of frames
@@ -95,6 +95,7 @@ if __name__ == "__main__":
                 # skip 10 frames if no people are found
                 count = 1
                 print("Null returned")
+                
             else:
                 # print(rects[0])
                 multiTracker = tracker.initialiseMultiTracker(trackerTypes[6], frame, rects)
@@ -107,10 +108,11 @@ if __name__ == "__main__":
                     p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
                     cv2.rectangle(frame, p1, p2, colour, 2, 1)
                     # print(frame.shape)
-                    # print("{} {}".format(int(newbox[0]+newbox[2]//2),int(newbox[1]+newbox[3])))
+                    print("{} {}".format(int(newbox[0]+newbox[2]//2),int(newbox[1]+newbox[3])))
                     ref_court_copy = perspectiveT.draw_ref_point(int(newbox[0]+newbox[2]//2),int(newbox[1]+newbox[3]),H, ref_court_copy,frame)
-                # print("showing image")
+                # prref_court_copy
                 cv2.imshow('video', frame)
+                cv2.imshow('refcourt',ref_court_copy)
                 cv2.waitKey(1)
 
     video.release()
