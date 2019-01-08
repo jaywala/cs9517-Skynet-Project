@@ -60,7 +60,6 @@ def transform_point(x,y,H,maxW,maxH):
 	newFrame[y][x] = 255
 	im_bit= np.stack([newFrame, newFrame, newFrame], axis=2)
 	im_bit = cv2.circle(im_bit, (int(x),int(y)),5, (255,255,255),-1)
-
     #Warp the image and determine where the point has been warped to
 	wrp = cv2.warpPerspective(im_bit, H,(maxW,maxH))
 
@@ -80,7 +79,6 @@ def draw_ref_point(x,y,H, ref_img, frame):
 	sel_h, sel_w = sel_frame.shape[:2]
 
 	newX, newY = transform_point(x*sel_w/fr_w,y*sel_h/fr_h,H, ref_w,ref_h)
-
     #Draw a small dot to show mapped location
 	if math.isnan(newY) != True:
 		cv2.circle(ref_img, (int(newY),int(newX)),5, (0,255,0),-1)
